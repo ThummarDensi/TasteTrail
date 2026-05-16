@@ -6,7 +6,8 @@
 [![Realtime](https://img.shields.io/badge/Realtime-Socket.IO-ff69b4)](#)
 
 >TasteTrial is a high-performance, responsive web application designed to bridge the gap between local eateries and hungry customers. This platform features a seamless ordering flow, real-time cart management, and a modern, intuitive UI.
->Demo :- https://kos-food-delivery.vercel.app/
+>
+>## Demo :- https://kos-food-delivery.vercel.app/
 ---
 
 ## 📌 Overview
