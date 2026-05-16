@@ -5,8 +5,8 @@
 [![Database](https://img.shields.io/badge/Database-MongoDB-brightgreen)](#)
 [![Realtime](https://img.shields.io/badge/Realtime-Socket.IO-ff69b4)](#)
 
-> A full-stack Food Ordering & Delivery Tracking app with realtime location updates, shop/item management, and secure authentication.
-
+>TasteTrial is a high-performance, responsive web application designed to bridge the gap between local eateries and hungry customers. This platform features a seamless ordering flow, real-time cart management, and a modern, intuitive UI.
+>Demo :- https://kos-food-delivery.vercel.app/
 ---
 
 ## 📌 Overview
