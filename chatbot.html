@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsible Gemini Chatbot</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a polished, mobile-first look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        .chat-container {
+            max-height: calc(100vh - 4rem); /* Full height minus header */
+        }
+        .message {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            margin-bottom: 0.75rem;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #3b82f6; /* Blue-500 */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .ai-message {
+            background-color: #ffffff; /* White */
+            color: #1f2937; /* Gray-800 */
+            align-self: flex-start;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-bottom-left-radius: 0.5rem;
+        }
+        .loading-dot {
+            animation: bounce 0.6s infinite alternate;
+        }
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes bounce {
+            to {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen antialiased">
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-center">Welcome to KOS chatbot</h1>
+    </header>
+    <!-- Chat Area -->
+    <main class="flex-grow overflow-hidden p-4 flex flex-col">
+        <div id="messages" class="flex flex-col flex-grow overflow-y-auto chat-container p-2 md:p-4">
+            <!-- Initial welcome message -->
+            <div class="message ai-message self-start shadow-md">
+                Hello! I am a highly responsible and helpful AI assistant powered by KOS. Ask me anything, and I'll do my best to provide you with an accurate and complete answer.
+            </div>
+            <!-- Chat messages will be appended here -->
+        </div>
+    </main>
+    <!-- Input Form -->
+    <div class="p-4 bg-white shadow-inner sticky bottom-0 border-t border-gray-200">
+        <div class="flex items-center max-w-2xl mx-auto">
+            <input type="text" id="userInput" placeholder="Type your message here..."
+                   class="flex-grow p-3 border border-gray-300 rounded-l-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-150">
+            <button id="sendButton" onclick="sendMessage()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-r-xl font-semibold shadow-md transition duration-150 flex items-center justify-center disabled:opacity-50"
+                    disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+        </div>
+        <div id="statusMessage" class="text-sm text-center text-gray-500 mt-2 h-4"></div>
+    </div>
+    <!-- Loading Indicator Template (Hidden) -->
+    <div id="loadingTemplate" class="message ai-message self-start flex items-center space-x-2 hidden">
+        <span class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></span>
+        <span class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></span>
+        <span class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></span>
+        <span class="text-gray-600">Thinking...</span>
+    </div>
+    <script type="module">
+        // Global variables for environment compliance (required boilerplate)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- CHATBOT CONSTANTS ---
+        const MODEL_NAME = 'gemini-2.5-flash-preview-09-2025';
+        const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
+        const apiKey = "AIzaSyDHg6bQPx4H0yCplFA3aWAXukbMVSfLe44"; // Canvas provides the API key at runtime
+        const messagesEl = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingTemplate = document.getElementById('loadingTemplate');
+        let chatHistory = JSON.parse(sessionStorage.getItem('chatHistory')) || [];
+
+        // System Instruction to enforce the requested persona
+        const systemPrompt = "You are a highly responsible, knowledgeable, and helpful AI chatbot. Your primary goal is to provide accurate, informative, and complete answers to every question the user asks. Always maintain a professional and friendly tone.";
+
+        // --- AUTH & SETUP ---
+        // Enable send button when input is focused/available
+        userInput.addEventListener('input', () => {
+            sendButton.disabled = userInput.value.trim() === '';
+        });
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && userInput.value.trim() !== '' && !sendButton.disabled) {
+                sendMessage();
+            }
+        });
+        // Initial check on load
+        sendButton.disabled = userInput.value.trim() === '';
+
+        // Function to load history and scroll to bottom
+        function loadHistory() {
+            chatHistory.forEach(msg => {
+                appendMessage(msg.parts[0].text, msg.role);
+            });
+            scrollToBottom();
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function scrollToBottom() {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        function appendMessage(text, sender) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message', 'shadow-md');
+            
+            // Convert markdown text to HTML for better rendering
+            const formattedText = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')          // Italic
+                .replace(/\n/g, '<br>');                        // Newlines
+            messageWrapper.innerHTML = formattedText;
+            messagesEl.appendChild(messageWrapper);
+            scrollToBottom();
+        }
+        function setLoading(isLoading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (isLoading) {
+                // Create or show the loading indicator
+                if (!loadingIndicator) {
+                    const clone = loadingTemplate.cloneNode(true);
+                    clone.id = 'loadingIndicator';
+                    clone.classList.remove('hidden');
+                    messagesEl.appendChild(clone);
+                } else {
+                    loadingIndicator.classList.remove('hidden');
+                }
+            } else {
+                // Hide or remove the loading indicator
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('hidden');
+                    // Remove the element to simplify the DOM and avoid sending it in history
+                    loadingIndicator.remove();
+                }
+            }
+            userInput.disabled = isLoading;
+            sendButton.disabled = isLoading;
+            scrollToBottom();
+        }
+
+        /**
+         * Generic fetch wrapper with exponential backoff for retries.
+         */
+        async function exponentialBackoffFetch(url, options, maxRetries = 5, delay = 1000) {
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 429 && response.ok) {
+                        return response;
+                    } else if (response.status === 429 && attempt < maxRetries - 1) {
+                        // Rate limit error, wait and retry
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Exponential increase
+                    } else {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    // Non-rate-limit error (e.g., network failure), retry if allowed
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+            throw new Error('Max retries exceeded.');
+        }
+
+        // --- MAIN CHAT LOGIC ---
+        window.sendMessage = async function() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            // 1. UI update for User Message
+            appendMessage(query, 'user');
+            userInput.value = '';
+            setLoading(true);
+            
+            // Add user message to history
+            const userMessage = { role: "user", parts: [{ text: query }] };
+            chatHistory.push(userMessage);
+            const apiUrl = `${API_BASE}${MODEL_NAME}:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: chatHistory,
+                tools: [{ "google_search": {} }], // Enable grounding for accurate, up-to-date answers
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            let aiResponseText = "Sorry, I encountered an error while processing your request.";
+            try {
+                const response = await exponentialBackoffFetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    aiResponseText = candidate.content.parts[0].text;
+                    
+                    // Add AI response to history
+                    const aiMessage = { role: "model", parts: [{ text: aiResponseText }] };
+                    chatHistory.push(aiMessage);
+                    sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+
+                    // Check for grounding sources
+                    const groundingMetadata = candidate.groundingMetadata;
+                    let sourcesHtml = '';
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        const sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title)
+                            .slice(0, 3); // Limit to 3 sources
+                        if (sources.length > 0) {
+                            sourcesHtml = '<div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">Sources: ' + 
+                                sources.map((s, i) => `<a href="${s.uri}" target="_blank" class="text-blue-400 hover:text-blue-500 hover:underline">${s.title}</a>`).join(', ') + 
+                                '</div>';
+                        }
+                    }
+                    aiResponseText += sourcesHtml;
+                } else if (result.error) {
+                    console.error("API Error:", result.error);
+                    aiResponseText = `Error: ${result.error.message || 'An unexpected API error occurred.'}`;
+                }
+            } catch (error) {
+                console.error("Fetch failed:", error);
+                aiResponseText = `Error: Could not connect to the service. Please check your connection.`;
+            } finally {
+                // 2. UI update for AI Message
+                setLoading(false);
+                appendMessage(aiResponseText, 'model');
+                sendButton.disabled = userInput.value.trim() === ''; // Re-enable if input has content
+            }
+        };
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+</html>
