@@ -1,4 +1,4 @@
-# 🍕 KOS Food Delivery
+# 🍕 TasteTrial Food Delivery
 
 [![Frontend](<https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB>)](https://react.dev)
 [![Backend](<https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933>)](https://expressjs.com)
@@ -7,13 +7,13 @@
 [![Admin](<https://img.shields.io/badge/Admin%20Panel-React%20%2B%20Redux-7c3aed>)](https://redux-toolkit.js.org)
 [![AI](<https://img.shields.io/badge/Chatbot-Google%20Gemini-4285F4>)](https://ai.google.dev)
 
-> **KOS Food Delivery** is a full-stack, multi-role food delivery platform connecting customers, restaurant owners, delivery personnel, and administrators. The platform features a seamless ordering flow, real-time delivery tracking, an AI-powered chatbot, and a comprehensive admin management panel.
+> **TasteTrial Food Delivery** is a full-stack, multi-role food delivery platform connecting customers, restaurant owners, delivery personnel, and administrators. The platform features a seamless ordering flow, real-time delivery tracking, an AI-powered chatbot, and a comprehensive admin management panel.
 
 ---
 
 ## 📌 Overview
 
-**KOS Food Delivery** is a comprehensive food ordering ecosystem built with modern web technologies. The platform serves four distinct user types:
+**TasteTrial Food Delivery** is a comprehensive food ordering ecosystem built with modern web technologies. The platform serves four distinct user types:
 
 - **Customers** — Browse restaurants, order food, track deliveries in real-time
 - **Restaurant Owners** — Manage shops, add/edit menu items, update order status
@@ -169,7 +169,7 @@ Real-time features (live location tracking, order status updates, delivery assig
 ## 🗂️ Project Structure
 
 ```
-Kos-Food-Delivery/
+TasteTrial-Food-Delivery/
 │
 ├── 📁 backend/                          # Main Backend API Server
 │   ├── 📁 config/
@@ -414,7 +414,7 @@ PORT=8000
 NODE_ENV=development                # "development" or "production"
 
 # ─── Database ───
-MONGODB_URL=mongodb+srv://<user>:<password>@cluster.xxxxx.mongodb.net/kos-food-delivery
+MONGODB_URL=mongodb+srv://<user>:<password>@cluster.xxxxx.mongodb.net/TasteTrial-food-delivery
 
 # ─── JWT ───
 JWT_SECRET=your_jwt_secret_key_here
@@ -443,7 +443,7 @@ PORT=8001
 NODE_ENV=development
 
 # ─── Database ───
-MONGODB_URL=mongodb+srv://<user>:<password>@cluster.xxxxx.mongodb.net/kos-food-delivery
+MONGODB_URL=mongodb+srv://<user>:<password>@cluster.xxxxx.mongodb.net/TasteTrial-food-delivery
 
 # ─── JWT ───
 JWT_SECRET=your_jwt_secret_key_here   # Can be different from main backend
@@ -663,7 +663,7 @@ VITE_FIREBASE_APIKEY=your_firebase_api_key
 
 ## 🤖 AI Chatbot
 
-KOS Food Delivery includes an **AI-powered chatbot** built with Google Gemini API.
+TasteTrial Food Delivery includes an **AI-powered chatbot** built with Google Gemini API.
 
 ### Features
 
