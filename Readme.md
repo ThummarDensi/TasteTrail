@@ -9,6 +9,10 @@
 
 > **TasteTrial Food Delivery** is a full-stack, multi-role food delivery platform connecting customers, restaurant owners, delivery personnel, and administrators. The platform features a seamless ordering flow, real-time delivery tracking, an AI-powered chatbot, and a comprehensive admin management panel.
 
+## ✨ Deployment Link
+- **Frontend** - https://tastetrial-frontend.onrender.com/
+- **Backend** - https://tastetrial-backend.onrender.com/
+- **Admin** - https://tastetrial-admin.onrender.com/
 ---
 
 ## 📌 Overview
